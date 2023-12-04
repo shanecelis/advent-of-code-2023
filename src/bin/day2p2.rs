@@ -20,7 +20,7 @@ struct Game {
     sets: Vec<Vec<Count>>
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 struct Count(u32,  u32,  u32);
 
 impl std::str::FromStr for Game {
@@ -152,8 +152,8 @@ mod tests {
         let mut input = "12 blue, 1 red";
 
         let p = pair.parse_next(&mut input).unwrap();
-        assert_eq!(p.0, 12);
-        assert_eq!(p.1, Color::Blue);
+        assert_eq!(Count(0,0,12), p);
+        // assert_eq!(p.1, Color::Blue);
     }
 
     #[test]
