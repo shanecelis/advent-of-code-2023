@@ -23,42 +23,42 @@ struct MapRange {
     length: u64,
 }
 
-#[derive(Debug)]
-struct CompositeRange {
-    ranges: Vec<Range<u64>>
-}
+// #[derive(Debug)]
+// struct CompositeRange {
+//     ranges: Vec<Range<u64>>
+// }
 
-impl CompositeRange {
+// impl CompositeRange {
 
-    fn select_mut<'a>(&'a mut self, other: &Range<u64>) -> Vec<usize> {
-        let mut result: Vec<usize> = Vec::new();
-        for i in 0..self.ranges.len() {
-            match self.ranges[i].intersect_ext(other) {
-                Empty | Less | Greater => {},
-                Same | Over => result.push(i),
-                LessOverlap => {
-                    self.ranges.insert(i + 1, Range { start: other.start, end: self.ranges[i].end });
-                    self.ranges[i].end = other.start - 1;
-                    result.push(i + 1);
-                }
-                GreaterOverlap => {
-                    self.ranges.insert(i + 1, Range { start: other.end, end: self.ranges[i].end });
-                    self.ranges[i].end = other.end;
-                    result.push(i);
-                }
-                Within => {
-                    let end = self.ranges[i].end;
-                    self.ranges[i].end = other.start - 1;
-                    self.ranges.insert(i + 1, other);
-                    self.ranges.insert(i + 2, other);
+//     fn select_mut<'a>(&'a mut self, other: &Range<u64>) -> Vec<usize> {
+//         let mut result: Vec<usize> = Vec::new();
+//         for i in 0..self.ranges.len() {
+//             match self.ranges[i].intersect_ext(other) {
+//                 Empty | Less | Greater => {},
+//                 Same | Over => result.push(i),
+//                 LessOverlap => {
+//                     self.ranges.insert(i + 1, Range { start: other.start, end: self.ranges[i].end });
+//                     self.ranges[i].end = other.start - 1;
+//                     result.push(i + 1);
+//                 }
+//                 GreaterOverlap => {
+//                     self.ranges.insert(i + 1, Range { start: other.end, end: self.ranges[i].end });
+//                     self.ranges[i].end = other.end;
+//                     result.push(i);
+//                 }
+//                 Within => {
+//                     let end = self.ranges[i].end;
+//                     self.ranges[i].end = other.start - 1;
+//                     self.ranges.insert(i + 1, other);
+//                     self.ranges.insert(i + 2, other);
 
 
-                }
-            }
-        }
-        result
-    }
-}
+//                 }
+//             }
+//         }
+//         result
+//     }
+// }
 
 impl std::str::FromStr for Map {
     type Err = String;
