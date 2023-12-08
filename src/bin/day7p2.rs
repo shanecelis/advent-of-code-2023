@@ -161,7 +161,7 @@ mod tests {
         assert_eq!(h.cards[2], 1);
         assert_eq!(h.cards[3], 10);
         assert_eq!(h.cards[4], 9);
-        assert_eq!(h.kind(), 20);
+        assert_eq!(h.kind(), 200);
     }
 
     #[test]
@@ -169,7 +169,7 @@ mod tests {
         let mut input = "KKJT9 1";
 
         let h = hand.parse_next(&mut input).unwrap();
-        assert_eq!(h.kind(), 30);
+        assert_eq!(h.kind(), 300);
     }
 
     #[test]
@@ -177,6 +177,6 @@ mod tests {
         let mut input = "KKJJ9 1";
 
         let h = hand.parse_next(&mut input).unwrap();
-        assert_eq!(h.kind(), 40);
+        assert_eq!(h.kind(), 400);
     }
 }
