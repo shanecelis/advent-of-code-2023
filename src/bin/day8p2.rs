@@ -4,6 +4,10 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::hash::{Hash, Hasher};
+use std::collections::hash_map::DefaultHasher;
+
 use winnow::prelude::*;
 use winnow::token::*;
 use winnow::combinator::*;
@@ -15,22 +19,58 @@ enum Dir {
 }
 
 #[derive(Debug,Clone)]
-struct Node {
-    name: String,
-    directions: (String, String)
+struct Node<T> {
+    name: T,
+    directions: (T, T)
 }
 
-struct State {
-    location: String,
-    nodes: HashMap<String, Node>,
+impl<T> Node<T> {
+
+    fn map<F,U>(self, f: F) -> Node<U>
+        where F: Fn(T) -> U,
+    U: Hash + Eq
+    {
+        Node { name: f(self.name),
+               directions: (f(self.directions.0),
+                            f(self.directions.1))
+        }
+    }
 }
 
-impl State {
+struct State<T>
+where T: Eq + Hash + PartialEq
+{
+    locations: Vec<T>,
+    end_nodes: HashSet<T>,
+    nodes: HashMap<T, Node<T>>,
+}
+
+impl<T> State<T>
+where T: Eq + Hash + PartialEq + Clone
+{
     fn go(&mut self, d: Dir) {
-        let dirs = &self.nodes.get(&self.location).unwrap().directions;
-        self.location = match d {
-            Dir::Left => dirs.0.clone(),
-            Dir::Right => dirs.1.clone(),
+        for location in &mut self.locations {
+            let dirs = &self.nodes.get(location).unwrap().directions;
+            *location = match d {
+                Dir::Left => dirs.0.clone(),
+                Dir::Right => dirs.1.clone(),
+            }
+        }
+    }
+
+    fn is_done(&self) -> bool {
+        // self.locations.iter().all(|n| n.chars().last().unwrap() == 'Z')
+        self.locations.iter().all(|n| self.end_nodes.contains(n))
+    }
+
+    fn map<F,U>(self, f: F) -> State<U>
+        where F: Fn(T) -> U,
+    U: Hash + Eq
+    {
+        State {
+            locations: self.locations.into_iter().map(&f).collect(),
+            end_nodes: self.end_nodes.into_iter().map(&f).collect(),
+            nodes: self.nodes.into_values().map(|x| (f(x.name.clone()), x.map(&f))).collect()
         }
     }
 }
@@ -46,12 +86,20 @@ fn directions(input: &mut &str) -> PResult<Vec<Dir>> {
 }
 
 fn label(input: &mut &str) -> PResult<String> {
-    take_while(1.., ('A'..='Z'))
+    take_while(1.., ('0'..='9','A'..='Z'))
         .map(String::from)
         .parse_next(input)
 }
+fn my_hash<T>(obj: T) -> u64
+where
+    T: Hash,
+{
+    let mut hasher = DefaultHasher::new();
+    obj.hash(&mut hasher);
+    hasher.finish()
+}
 
-fn node(input: &mut &str) -> PResult<Node> {
+fn node(input: &mut &str) -> PResult<Node<String>> {
     let name = label(input)?;
     let _ = " = (".parse_next(input)?;
     let left = label(input)?;
@@ -79,7 +127,7 @@ fn main() {
         let mut line: String = lines.next().unwrap().unwrap();
         let dirs = directions(&mut line.as_str()).unwrap();
         let _ = lines.next();
-        let mut nodes: HashMap<String, Node> = HashMap::new();
+        let mut nodes: HashMap<String, Node<String>> = HashMap::new();
 
         for line in lines {
             if let Ok(l) = line {
@@ -87,12 +135,14 @@ fn main() {
                 nodes.insert(n.name.clone(), n);
             }
         }
-        let mut state = State { location: "AAA".into(),
-                                nodes: nodes };
+        let mut state: State<String> = State { locations: nodes.keys().filter(|n| n.chars().last().unwrap() == 'A').cloned().collect(),
+                                        end_nodes: nodes.keys().filter(|n| n.chars().last().unwrap() == 'Z').cloned().collect(),
+                                        nodes: nodes };
+        let mut state = state.map(my_hash);
 
         let mut count = 0;
         for d in dirs.into_iter().cycle() {
-            if state.location == "ZZZ" {
+            if state.is_done() {
                 break;
             }
             state.go(d);
