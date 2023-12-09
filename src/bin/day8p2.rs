@@ -140,7 +140,7 @@ fn main() {
                                         nodes: nodes };
         let mut state = state.map(my_hash);
 
-        let mut count = 0;
+        let mut count: u64 = 0;
         for d in dirs.into_iter().cycle() {
             if state.is_done() {
                 break;
