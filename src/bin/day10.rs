@@ -54,6 +54,7 @@ impl Grid {
     fn try_move(&self, h: &Heading) -> Option<Heading> {
         let next_loc = (h.loc.0 + h.dir.0, h.loc.1 + h.dir.1);
         let next_char = self.get(&next_loc)?;
+        // println!("{next_char}");
         let next_dir = match (h.dir.clone(), next_char)  {
             (Dir(i, 0), '|') => Some(Dir(i, 0)),
             (Dir(1, 0), 'L') => Some(Dir(0, 1)),
@@ -65,6 +66,7 @@ impl Grid {
             (Dir(0, 1), 'J') => Some(Dir(-1, 0)),
             (Dir(0, -1), 'L') => Some(Dir(-1, 0)),
             (Dir(0, -1), 'F') => Some(Dir(1, 0)),
+            (d, 'S') => Some(d),
             // Dir(0, 1) => self.get(next_loc).unwrap() == '-',
             // Dir(-1, 0) => self.get(next_loc).unwrap() == '|',
             // Dir(0, -1) => self.get(next_loc).unwrap() == '-',
@@ -73,14 +75,13 @@ impl Grid {
         next_dir.map(|d| Heading { loc: next_loc, dir: d })
     }
 
-    fn follow_pipe(&self, h: &Heading, finish: char) -> Option<u32> {
-        let mut heading: Heading = h.clone();
+    fn follow_pipe(&self, mut heading: Heading, finish: char) -> Option<u32> {
         let mut count = 0;
         while let Some(next_heading) = self.try_move(&heading) {
+            count += 1;
             if self.get(&next_heading.loc).unwrap() == finish {
                 return Some(count);
             }
-            count += 1;
             heading = next_heading;
         }
         None
@@ -128,9 +129,10 @@ fn main() {
 
         let start = grid.find('S').unwrap();
         for dir in [Dir(1, 0), Dir(-1, 0), Dir(0, 1), Dir(0, -1)] {
-            let mut heading = Heading { loc: start, dir };
-            if let Some(count) = grid.follow_pipe(&heading, 'S') {
-                println!("{count}");
+            let heading = Heading { loc: start, dir };
+            if let Some(count) = grid.follow_pipe(heading, 'S') {
+                println!("{}", count/2);
+                return;
             }
         }
         // let start_count = grid.count_mut(start).unwrap();
